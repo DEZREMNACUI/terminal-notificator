@@ -4,7 +4,7 @@
 
 ## 阶段 1: 项目初始化与 CLI 基础
 
-- [~] Task: 初始化 Rust 项目结构
+- [x] Task: 初始化 Rust 项目结构 fb1ef16
     - 创建 `Cargo.toml`。
     - 配置依赖 (`clap`, `sysinfo`, `objc2` 等)。
     - 设置基本的模块结构 (`main.rs`, `cli.rs`, `context.rs`, `notifier.rs`)。
