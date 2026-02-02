@@ -1,30 +1,29 @@
-use mac_notification_sys::{Notification, set_application};
+use mac_notification_sys::{Notification, set_application, NotificationResponse};
 
-pub struct Notifier {
-    bundle_id: String,
-}
+pub struct Notifier;
 
 impl Notifier {
     pub fn new() -> Self {
-        // Use a default bundle ID or try to use the parent's if available
-        // Terminal.app is a safe default for notifications in CLI
-        let bundle_id = "com.apple.Terminal".to_string();
-        set_application(&bundle_id).unwrap_or_default();
-        
-        Notifier { bundle_id }
+        let bundle_id = "com.apple.Terminal";
+        set_application(bundle_id).unwrap_or_default();
+        Notifier
     }
 
     pub fn with_bundle_id(bundle_id: &str) -> Self {
         set_application(bundle_id).unwrap_or_default();
-        Notifier { bundle_id: bundle_id.to_string() }
+        Notifier
     }
 
-    pub fn send(&self, title: &str, message: &str) -> bool {
+    pub fn send_and_wait(&self, title: &str, message: &str) -> bool {
         let response = Notification::new()
             .title(title)
             .message(message)
+            .wait_for_click(true)
             .send();
             
-        response.is_ok()
+        match response {
+            Ok(NotificationResponse::Click) | Ok(NotificationResponse::ActionButton(_)) => true,
+            _ => false,
+        }
     }
 }

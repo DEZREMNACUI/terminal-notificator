@@ -28,10 +28,16 @@ fn main() {
     };
 
     println!("Sending notification: {} - {}", args.title, args.message);
+    println!("Waiting for click to activate parent application...");
     
-    if notifier.send(&args.title, &args.message) {
-        println!("Notification sent successfully.");
+    if notifier.send_and_wait(&args.title, &args.message) {
+        println!("Notification clicked! Activating...");
+        if ctx.activate() {
+            println!("Successfully activated parent application.");
+        } else {
+            println!("Failed to activate parent application.");
+        }
     } else {
-        println!("Failed to send notification.");
+        println!("Notification ignored or closed.");
     }
 }

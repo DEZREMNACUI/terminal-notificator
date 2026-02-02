@@ -4,8 +4,6 @@ use objc2_app_kit::{NSRunningApplication, NSApplicationActivationOptions};
 use objc2::rc::Retained;
 
 pub struct ProcessContext {
-    pub pid: u32,
-    pub parent_pid: Option<u32>,
     pub bundle_id: Option<String>,
     pub app_name: Option<String>,
     pub app_pid: Option<u32>,
@@ -23,8 +21,6 @@ impl ProcessContext {
             .map(|p| p.as_u32());
 
         let mut context = ProcessContext {
-            pid: current_pid.as_u32(),
-            parent_pid,
             bundle_id: None,
             app_name: None,
             app_pid: None,
@@ -43,15 +39,11 @@ impl ProcessContext {
         while let Some(proc) = sys.process(current_pid) {
             let pid_u32 = current_pid.as_u32();
             
-            // Try to get Bundle ID using AppKit
             if let Some(bundle_id) = get_bundle_id(pid_u32) {
-                // Ignore background helpers if they don't have a normal activation policy
-                // For now, let's just take the first one that has a bundle ID and isn't just a shell
                 self.bundle_id = Some(bundle_id);
                 self.app_name = Some(proc.name().to_string());
                 self.app_pid = Some(pid_u32);
                 
-                // If it's a "Helper", keep going up to find the main app
                 if !proc.name().to_lowercase().contains("helper") {
                     break;
                 }
@@ -70,7 +62,7 @@ impl ProcessContext {
             unsafe {
                 let app = NSRunningApplication::runningApplicationWithProcessIdentifier(pid as i32);
                 if let Some(app) = app {
-                    // Try to activate
+                    #[allow(deprecated)]
                     return app.activateWithOptions(NSApplicationActivationOptions::NSApplicationActivateIgnoringOtherApps);
                 }
             }
@@ -93,7 +85,7 @@ mod tests {
     #[test]
     fn test_current_context() {
         let context = ProcessContext::current();
-        assert!(context.pid > 0);
-        assert!(context.parent_pid.is_some());
+        // Just verify it doesn't crash and we get some info
+        assert!(context.app_name.is_some() || context.bundle_id.is_some());
     }
 }
