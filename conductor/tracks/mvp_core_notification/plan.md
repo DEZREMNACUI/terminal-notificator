@@ -8,7 +8,7 @@
     - 创建 `Cargo.toml`。
     - 配置依赖 (`clap`, `sysinfo`, `objc2` 等)。
     - 设置基本的模块结构 (`main.rs`, `cli.rs`, `context.rs`, `notifier.rs`)。
-- [ ] Task: 实现命令行参数解析
+- [x] Task: 实现命令行参数解析 41c707f
     - **TDD**: 编写测试用例验证 `-t`, `-m` 等参数的解析。
     - 实现 `cli` 模块，使用 `clap` 定义参数结构。
 - [ ] Task: Conductor - 用户手册验证 '阶段 1: 项目初始化与 CLI 基础' (协议在 workflow.md)
