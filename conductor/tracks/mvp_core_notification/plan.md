@@ -27,7 +27,7 @@
 
 ## 阶段 3: 通知发送与交互
 
-- [ ] Task: 实现 macOS 通知发送
+- [x] Task: 实现 macOS 通知发送 af6eba2
     - **TDD**: 封装通知发送逻辑。
     - 使用 `UserNotifications` 框架发送简单的通知。
     - 确保支持标题和正文。
