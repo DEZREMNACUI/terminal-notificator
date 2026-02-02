@@ -13,3 +13,11 @@ objc2-user-notifications = "0.2"
 
 [dev-dependencies]
 serial_test = "3.0"
+
+[[bin]]
+name = "terminal-notificator"
+path = "src/main.rs"
+
+[[bin]]
+name = "verify_focus"
+path = "src/verify_focus.rs"
