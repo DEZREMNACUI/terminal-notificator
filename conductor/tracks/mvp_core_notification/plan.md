@@ -13,7 +13,7 @@
     - 实现 `cli` 模块，使用 `clap` 定义参数结构。
 - [ ] Task: Conductor - 用户手册验证 '阶段 1: 项目初始化与 CLI 基础' (协议在 workflow.md)
 
-## 阶段 2: 上下文感知与进程探测
+## 阶段 2: 上下文感知与进程探测 [checkpoint: 6acb628]
 
 - [x] Task: 实现父进程探测逻辑 333b67c
     - **TDD**: 编写测试（可能需要 mock `sysinfo`）来验证进程树查找逻辑。
