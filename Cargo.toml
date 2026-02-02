@@ -1,0 +1,15 @@
+[package]
+name = "terminal-notificator"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+clap = { version = "4.5", features = ["derive"] }
+sysinfo = "0.30"
+objc2 = "0.5"
+objc2-app-kit = { version = "0.2", features = ["NSApplication", "NSRunningApplication", "NSWorkspace"] }
+objc2-foundation = { version = "0.2", features = ["NSString", "NSArray", "NSDictionary", "NSUUID", "NSDate"] }
+objc2-user-notifications = "0.2"
+
+[dev-dependencies]
+serial_test = "3.0" # Useful for running tests serially if they touch system state
