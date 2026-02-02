@@ -2,7 +2,7 @@
 
 本计划概述了构建 MVP 的分步任务。所有代码更改必须遵循 TDD（测试驱动开发）流程。
 
-## 阶段 1: 项目初始化与 CLI 基础
+## 阶段 1: 项目初始化与 CLI 基础 [checkpoint: f409fd9]
 
 - [x] Task: 初始化 Rust 项目结构 fb1ef16
     - 创建 `Cargo.toml`。
