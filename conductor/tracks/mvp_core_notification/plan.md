@@ -19,7 +19,7 @@
     - **TDD**: 编写测试（可能需要 mock `sysinfo`）来验证进程树查找逻辑。
     - 实现 `context` 模块，使用 `sysinfo` 获取当前进程的父进程 PID 和 Bundle ID。
     - 添加日志输出以方便调试（在 verbose 模式下）。
-- [ ] Task: 集成 macOS 窗口激活功能 (基础)
+- [x] Task: 集成 macOS 窗口激活功能 (基础) c16f540
     - **TDD**: 这里的单元测试较难，侧重于封装原生调用的 unsafe 代码，并提供 safe 接口。
     - 使用 `objc2` / `AppKit` 实现根据 Bundle ID 激活应用的功能。
     - 编写一个简单的独立验证脚本 (`verify_focus.rs`) 来手动测试焦点切换。
