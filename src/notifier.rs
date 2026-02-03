@@ -4,8 +4,8 @@ pub struct Notifier;
 
 impl Notifier {
     pub fn new() -> Self {
-        let bundle_id = "com.apple.Terminal";
-        set_application(bundle_id).unwrap_or_default();
+        // let bundle_id = "com.apple.Terminal";
+        // set_application(bundle_id).unwrap_or_default();
         Notifier
     }
 
