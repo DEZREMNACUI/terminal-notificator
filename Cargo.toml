@@ -2,14 +2,23 @@
 name = "terminal-notificator"
 version = "0.1.0"
 edition = "2021"
+default-run = "terminal-notificator"
 
 [dependencies]
 clap = { version = "4.5", features = ["derive"] }
 sysinfo = "0.30"
 objc2 = "0.5"
+block2 = "0.5"
 objc2-app-kit = { version = "0.2", features = ["NSApplication", "NSRunningApplication", "NSWorkspace", "libc"] }
 objc2-foundation = { version = "0.2", features = ["NSString", "NSArray", "NSDictionary", "NSUUID", "NSDate", "NSObject", "NSSet", "NSError", "NSBundle"] }
 mac-notification-sys = "0.6"
 
 [dev-dependencies]
 serial_test = "3.0"
+
+[profile.release]
+opt-level = "z"     # Optimize for size
+lto = true          # Enable Link Time Optimization
+codegen-units = 1   # Reduce parallel code generation units for better optimization
+panic = "abort"     # Remove panic unwinding code
+strip = true        # Strip symbols from the binary
