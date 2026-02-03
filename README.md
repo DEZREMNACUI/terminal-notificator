@@ -13,6 +13,12 @@
 
 ## 安装
 
+### 使用 Homebrew (推荐)
+```bash
+brew tap youruser/tap
+brew install terminal-notificator
+```
+
 ### 从源码构建
 要求安装有 [Rust 环境](https://rustup.rs/)。
 
