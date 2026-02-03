@@ -37,7 +37,7 @@
     - 确保主线程保持运行直到通知被处理或超时。
 - [ ] Task: Conductor - 用户手册验证 '阶段 3: 通知发送与交互' (协议在 workflow.md)
 
-## 阶段 4: 构建与发布准备
+## 阶段 4: 构建与发布准备 [checkpoint: 6a2cdc7]
 
 - [x] Task: 优化构建配置 756f751
     - 配置 release profile (LTO, strip symbols) 以减小体积。
