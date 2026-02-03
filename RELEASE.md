@@ -52,7 +52,7 @@ shasum -a 256 terminal-notificator.tar.gz
 用户只需执行以下两步：
 
 ```bash
-brew tap youruser/tap
+brew tap youruser/tap //brew tap DEZREMNACUI/repo https://github.com/DEZREMNACUI/terminal-notificator 
 brew install terminal-notificator
 ```
 
