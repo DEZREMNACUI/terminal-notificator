@@ -25,7 +25,7 @@
     - 编写一个简单的独立验证脚本 (`verify_focus.rs`) 来手动测试焦点切换。
 - [ ] Task: Conductor - 用户手册验证 '阶段 2: 上下文感知与进程探测' (协议在 workflow.md)
 
-## 阶段 3: 通知发送与交互
+## 阶段 3: 通知发送与交互 [checkpoint: c71eeff]
 
 - [x] Task: 实现 macOS 通知发送 af6eba2
     - **TDD**: 封装通知发送逻辑。
