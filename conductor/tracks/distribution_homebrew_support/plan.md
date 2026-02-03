@@ -6,7 +6,7 @@
     - 在项目根目录创建 `terminal-notificator.rb`。
     - 填入基于 Cargo 的标准安装逻辑。
     - 使用占位符 (e.g., `<URL>`, `<SHA256>`) 暂时替代具体版本信息。
-- [ ] Task: 编写 RELEASE.md 指南
+- [x] Task: 编写 RELEASE.md 指南 8526bb5
     - 创建 `RELEASE.md`。
     - 记录从 `cargo build` 到 GitHub Release 再到更新 Formula 的完整步骤。
 - [ ] Task: Conductor - 用户手册验证 '阶段 1: 创建 Formula 与发布指南' (协议在 workflow.md)
