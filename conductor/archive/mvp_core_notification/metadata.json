@@ -1,0 +1,8 @@
+{
+  "track_id": "mvp_core_notification",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-02-02T00:00:00Z",
+  "updated_at": "2026-02-02T00:00:00Z",
+  "description": "实现核心通知功能及点击跳转回终端上下文的 MVP。"
+}
