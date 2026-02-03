@@ -36,18 +36,28 @@ shasum -a 256 terminal-notificator.tar.gz
 
 复制输出的哈希值。
 
-## 4. 更新 Homebrew Formula
+## 4. 更新 Homebrew Formula (Tap)
 
-1.  打开项目根目录下的 `terminal-notificator.rb`。
-2.  更新 `url` 字段中的版本号。
-3.  更新 `sha256` 字段为上一步计算出的值。
-4.  提交更改: `git commit -am "chore(dist): Update Homebrew formula for vx.y.z"`
-5.  推送更改: `git push`
+为了支持 `brew install terminal-notificator`，建议创建一个名为 `homebrew-tap` 的专门仓库，或者直接在本项目中维护（如果本项目本身作为 Tap）。
 
-现在，用户可以通过以下方式安装新版本:
+1.  **更新 Formula**:
+    - 打开 `Formula/terminal-notificator.rb`。
+    - 更新 `url` 和 `sha256`。
+2.  **提交并推送**:
+    - `git commit -am "chore(dist): Update formula for vx.y.z"`
+    - `git push`
+
+## 5. 用户安装方式
+
+用户只需执行以下两步：
 
 ```bash
-brew install --build-from-source https://raw.githubusercontent.com/youruser/terminal-notificator/master/terminal-notificator.rb
+brew tap youruser/tap
+brew install terminal-notificator
 ```
 
-或者，如果您设置了 tap，用户只需运行 `brew upgrade terminal-notificator`。
+一旦安装过一次，后续升级只需：
+
+```bash
+brew upgrade terminal-notificator
+```
