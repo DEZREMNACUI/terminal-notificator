@@ -2,10 +2,10 @@ class TerminalNotificator < Formula
   desc "Lightweight, context-aware macOS terminal notifier in Rust"
   homepage "https://github.com/dezremnacui/terminal-notificator"
   url "https://github.com/dezremnacui/terminal-notificator/archive/refs/tags/v0.1.0.tar.gz"
-  sha256 "8f0c5fee7c2accb718bcf16462238f2cd2bfa177d004cb5c0e9a4a9be086adf4"
+  sha256 "dbc6bfbacdb2316d9e485ee06369ead427bea91e8bb8a65f1e95ec3bdcf63e9d"
   license "MIT"
 
-  depends_on "rust" => :build
+  # depends_on "rust" => :build
 
   def install
     system "cargo", "install", *std_cargo_args
