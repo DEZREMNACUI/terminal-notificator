@@ -4,5 +4,5 @@
 
 ---
 
-- [~] **Track: MVP: 核心通知与上下文切换**
+- [x] **Track: MVP: 核心通知与上下文切换**
   *链接: [./conductor/tracks/mvp_core_notification/](./conductor/tracks/mvp_core_notification/)*
