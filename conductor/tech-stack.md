@@ -7,7 +7,7 @@
 - **Clap (v4)**: 用于处理命令行参数解析。支持生成的帮助信息、自动补全脚本以及类型安全的参数定义。
 
 ## macOS System Integration
-- **objc2 / icrate**: 用于直接与 macOS 的 Objective-C 运行时和 Apple 框架（如 `UserNotifications` 和 `AppKit`）交互。相比于调用 `osascript`，直接调用系统 API 能显著提升响应速度。
+- **mac-notification-sys**: 用于在 CLI 环境下稳健地发送 macOS 原生通知。它封装了对 `UserNotifications` 框架的调用，并妥善处理了 CLI 进程缺乏 Bundle ID 的限制。
 - **Core Foundation / AppKit**: 用于检索进程信息、获取父进程的 Bundle ID 以及执行窗口激活（跳转）操作。
 
 ## Process & System Info
