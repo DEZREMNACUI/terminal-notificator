@@ -2,7 +2,7 @@
 
 ## 阶段 1: 创建 Formula 与发布指南
 
-- [~] Task: 创建 Homebrew Formula 模板
+- [x] Task: 创建 Homebrew Formula 模板 071b288
     - 在项目根目录创建 `terminal-notificator.rb`。
     - 填入基于 Cargo 的标准安装逻辑。
     - 使用占位符 (e.g., `<URL>`, `<SHA256>`) 暂时替代具体版本信息。
