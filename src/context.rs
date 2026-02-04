@@ -1,8 +1,11 @@
 use sysinfo::{System, Pid};
 use std::process;
 use std::env;
-use objc2_app_kit::{NSRunningApplication, NSApplicationActivationOptions, NSWorkspace};
+use std::ptr::NonNull;
+use objc2_app_kit::{NSRunningApplication, NSApplicationActivationOptions, NSWorkspace, NSWorkspaceDidActivateApplicationNotification};
+use objc2_foundation::{NSNotification, NSOperationQueue};
 use objc2::rc::Retained;
+use block2::RcBlock;
 
 #[derive(Clone)]
 pub struct ProcessContext {
@@ -12,16 +15,46 @@ pub struct ProcessContext {
 }
 
 impl ProcessContext {
-    pub fn is_current_app_focused(&self) -> bool {
-        if let Some(pid) = self.app_pid {
-             unsafe {
+    pub fn start_focus_monitoring(&self) {
+        if let Some(target_pid) = self.app_pid {
+            unsafe {
                 let workspace = NSWorkspace::sharedWorkspace();
-                if let Some(front_app) = workspace.frontmostApplication() {
-                    return front_app.processIdentifier() as u32 == pid;
+                
+                // INITIAL CHECK: If the target app is ALREADY focused, exit immediately.
+                // This covers the case where the user never switched away.
+                if let Some(front) = workspace.frontmostApplication() {
+                    if front.processIdentifier() as u32 == target_pid {
+                        std::process::exit(0);
+                    }
                 }
+
+                let notification_center = workspace.notificationCenter();
+                let queue = NSOperationQueue::mainQueue();
+                
+                // Monitor application activation events
+                let block = RcBlock::new(move |_: NonNull<NSNotification>| {
+                    // When notified, check if the frontmost app is our target
+                    let ws = NSWorkspace::sharedWorkspace();
+                    if let Some(front) = ws.frontmostApplication() {
+                        if front.processIdentifier() as u32 == target_pid {
+                            std::process::exit(0);
+                        }
+                    }
+                });
+
+                let block_ptr: &block2::Block<dyn Fn(NonNull<NSNotification>)> = &block;
+
+                notification_center.addObserverForName_object_queue_usingBlock(
+                    Some(NSWorkspaceDidActivateApplicationNotification),
+                    None,
+                    Some(&queue),
+                    block_ptr
+                );
+                
+                // Leak the block to keep it alive for the duration of the program
+                Box::leak(Box::new(block));
             }
         }
-        false
     }
 
     pub fn current() -> Self {
