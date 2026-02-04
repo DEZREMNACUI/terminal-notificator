@@ -1,9 +1,10 @@
 use sysinfo::{System, Pid};
 use std::process;
 use std::env;
-use objc2_app_kit::{NSRunningApplication, NSApplicationActivationOptions};
+use objc2_app_kit::{NSRunningApplication, NSApplicationActivationOptions, NSWorkspace};
 use objc2::rc::Retained;
 
+#[derive(Clone)]
 pub struct ProcessContext {
     pub bundle_id: Option<String>,
     pub app_name: Option<String>,
@@ -11,6 +12,18 @@ pub struct ProcessContext {
 }
 
 impl ProcessContext {
+    pub fn is_current_app_focused(&self) -> bool {
+        if let Some(pid) = self.app_pid {
+             unsafe {
+                let workspace = NSWorkspace::sharedWorkspace();
+                if let Some(front_app) = workspace.frontmostApplication() {
+                    return front_app.processIdentifier() as u32 == pid;
+                }
+            }
+        }
+        false
+    }
+
     pub fn current() -> Self {
         let mut sys = System::new_all();
         sys.refresh_all();
@@ -81,32 +94,19 @@ impl ProcessContext {
         let dir_name = current_dir.and_then(|p| p.file_name().map(|n| n.to_string_lossy().to_string()));
 
         if let Some(name) = dir_name {
-            println!("Debug: Target project name: '{}'", name);
-            
-            // Improved AppleScript:
-            // 1. Find the window matching the project name
-            // 2. perform AXRaise on it (to make it the key window of the app)
-            // 3. Activate the app (set frontmost)
-            // This order prevents flickering (activating wrong window then switching)
             let script = format!(
                 r#"
                 tell application "System Events"
                     try
                         set targetProc to first process whose unix id is {}
-                        
                         tell targetProc
                             set targetWin to (first window whose name contains "{}")
-                            
-                            -- Raise the specific window to be the top of the app's windows
                             perform action "AXRaise" of targetWin
-                            
-                            -- Then bring the app to the front
                             set frontmost to true
-                            
-                            return "true|match:" & (name of targetWin)
+                            return "true"
                         end tell
-                    on error errMsg
-                        return "error|" & errMsg
+                    on error
+                        return "false"
                     end try
                 end tell
                 "#,
@@ -120,19 +120,8 @@ impl ProcessContext {
 
             if let Ok(out) = output {
                 let stdout = String::from_utf8_lossy(&out.stdout).trim().to_string();
-                let stderr = String::from_utf8_lossy(&out.stderr).trim().to_string();
-                
-                if stdout.starts_with("true") {
-                    println!("Debug: AppleScript success: {}", stdout);
-                    return true;
-                } else {
-                    println!("Debug: AppleScript did not find window. Result: '{}', Stderr: '{}'", stdout, stderr);
-                }
-            } else {
-                println!("Debug: Failed to execute osascript");
+                return stdout == "true";
             }
-        } else {
-            println!("Debug: Could not determine current directory name");
         }
         false
     }
