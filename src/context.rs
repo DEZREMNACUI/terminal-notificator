@@ -1,11 +1,15 @@
-use sysinfo::{System, Pid};
-use std::process;
-use std::env;
-use std::ptr::NonNull;
-use objc2_app_kit::{NSRunningApplication, NSApplicationActivationOptions, NSWorkspace, NSWorkspaceDidActivateApplicationNotification};
-use objc2_foundation::{NSNotification, NSOperationQueue};
-use objc2::rc::Retained;
 use block2::RcBlock;
+use objc2::rc::Retained;
+use objc2_app_kit::{
+    NSApplicationActivationOptions, NSRunningApplication, NSWorkspace,
+    NSWorkspaceDidActivateApplicationNotification,
+};
+use objc2_foundation::{NSNotification, NSOperationQueue};
+use std::env;
+use std::process;
+use std::ptr::NonNull;
+use std::rc::Rc;
+use sysinfo::{Pid, System};
 
 #[derive(Clone)]
 pub struct ProcessContext {
@@ -18,28 +22,25 @@ impl ProcessContext {
     pub fn start_focus_monitoring(&self) {
         if let Some(target_pid) = self.app_pid {
             unsafe {
-                let workspace = NSWorkspace::sharedWorkspace();
-                
-                // INITIAL CHECK: If the target app is ALREADY focused, exit immediately.
-                // This covers the case where the user never switched away.
-                if let Some(front) = workspace.frontmostApplication() {
-                    if front.processIdentifier() as u32 == target_pid {
-                        std::process::exit(0);
-                    }
-                }
-
-                let notification_center = workspace.notificationCenter();
-                let queue = NSOperationQueue::mainQueue();
-                
-                // Monitor application activation events
-                let block = RcBlock::new(move |_: NonNull<NSNotification>| {
+                let workspace = Rc::new(NSWorkspace::sharedWorkspace());
+                let workspace_ref = workspace.clone();
+                let check_and_exit_if_focused = move || {
                     // When notified, check if the frontmost app is our target
-                    let ws = NSWorkspace::sharedWorkspace();
-                    if let Some(front) = ws.frontmostApplication() {
+                    if let Some(front) = workspace_ref.frontmostApplication() {
                         if front.processIdentifier() as u32 == target_pid {
                             std::process::exit(0);
                         }
                     }
+                };
+
+                check_and_exit_if_focused();
+
+                let notification_center = workspace.notificationCenter();
+                let queue = NSOperationQueue::mainQueue();
+
+                // Monitor application activation events
+                let block = RcBlock::new(move |_: NonNull<NSNotification>| {
+                    check_and_exit_if_focused();
                 });
 
                 let block_ptr: &block2::Block<dyn Fn(NonNull<NSNotification>)> = &block;
@@ -48,9 +49,9 @@ impl ProcessContext {
                     Some(NSWorkspaceDidActivateApplicationNotification),
                     None,
                     Some(&queue),
-                    block_ptr
+                    block_ptr,
                 );
-                
+
                 // Leak the block to keep it alive for the duration of the program
                 Box::leak(Box::new(block));
             }
@@ -62,8 +63,9 @@ impl ProcessContext {
         sys.refresh_all();
 
         let current_pid = Pid::from_u32(process::id());
-        
-        let parent_pid = sys.process(current_pid)
+
+        let parent_pid = sys
+            .process(current_pid)
             .and_then(|p| p.parent())
             .map(|p| p.as_u32());
 
@@ -82,20 +84,21 @@ impl ProcessContext {
 
     fn resolve_app_info(&mut self, sys: &System, ppid: Pid) {
         let mut current_pid = ppid;
-        
+
         while let Some(proc) = sys.process(current_pid) {
             let pid_u32 = current_pid.as_u32();
             let proc_name = proc.name();
-            
+
             if let Some(bundle_id) = get_bundle_id(pid_u32) {
                 self.bundle_id = Some(bundle_id);
                 self.app_name = Some(proc_name.to_string());
                 self.app_pid = Some(pid_u32);
-                
-                if !proc_name.to_lowercase().contains("helper") && 
-                   !proc_name.to_lowercase().contains("zsh") && 
-                   !proc_name.to_lowercase().contains("bash") &&
-                   !proc_name.to_lowercase().contains("login") {
+
+                if !proc_name.to_lowercase().contains("helper")
+                    && !proc_name.to_lowercase().contains("zsh")
+                    && !proc_name.to_lowercase().contains("bash")
+                    && !proc_name.to_lowercase().contains("login")
+                {
                     break;
                 }
             }
@@ -135,7 +138,9 @@ impl ProcessContext {
                 let app = NSRunningApplication::runningApplicationWithProcessIdentifier(pid as i32);
                 if let Some(app) = app {
                     #[allow(deprecated)]
-                    return app.activateWithOptions(NSApplicationActivationOptions::NSApplicationActivateIgnoringOtherApps);
+                    return app.activateWithOptions(
+                        NSApplicationActivationOptions::NSApplicationActivateIgnoringOtherApps,
+                    );
                 }
             }
         }
@@ -144,7 +149,8 @@ impl ProcessContext {
 
     fn activate_via_applescript(&self, pid: u32) -> bool {
         let current_dir = env::current_dir().ok();
-        let dir_name = current_dir.and_then(|p| p.file_name().map(|n| n.to_string_lossy().to_string()));
+        let dir_name =
+            current_dir.and_then(|p| p.file_name().map(|n| n.to_string_lossy().to_string()));
 
         if let Some(name) = dir_name {
             let script = format!(
@@ -163,7 +169,8 @@ impl ProcessContext {
                     end try
                 end tell
                 "#,
-                pid, name.replace("\"", "\\\"")
+                pid,
+                name.replace("\"", "\\\"")
             );
 
             let output = process::Command::new("osascript")
@@ -182,8 +189,10 @@ impl ProcessContext {
 
 fn get_bundle_id(pid: u32) -> Option<String> {
     unsafe {
-        let app: Option<Retained<NSRunningApplication>> = NSRunningApplication::runningApplicationWithProcessIdentifier(pid as i32);
-        app.and_then(|a| a.bundleIdentifier()).map(|s| s.to_string())
+        let app: Option<Retained<NSRunningApplication>> =
+            NSRunningApplication::runningApplicationWithProcessIdentifier(pid as i32);
+        app.and_then(|a| a.bundleIdentifier())
+            .map(|s| s.to_string())
     }
 }
 
