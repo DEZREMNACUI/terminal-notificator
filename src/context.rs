@@ -85,13 +85,17 @@ impl ProcessContext {
         
         while let Some(proc) = sys.process(current_pid) {
             let pid_u32 = current_pid.as_u32();
+            let proc_name = proc.name();
             
             if let Some(bundle_id) = get_bundle_id(pid_u32) {
                 self.bundle_id = Some(bundle_id);
-                self.app_name = Some(proc.name().to_string());
+                self.app_name = Some(proc_name.to_string());
                 self.app_pid = Some(pid_u32);
                 
-                if !proc.name().to_lowercase().contains("helper") {
+                if !proc_name.to_lowercase().contains("helper") && 
+                   !proc_name.to_lowercase().contains("zsh") && 
+                   !proc_name.to_lowercase().contains("bash") &&
+                   !proc_name.to_lowercase().contains("login") {
                     break;
                 }
             }
@@ -100,6 +104,22 @@ impl ProcessContext {
                 current_pid = next_ppid;
             } else {
                 break;
+            }
+        }
+
+        // Fallback for Ghostty or other terminals that break the process tree
+        if self.app_pid.is_none() {
+            for proc in sys.processes().values() {
+                let name = proc.name().to_lowercase();
+                if name.contains("ghostty") {
+                    let pid = proc.pid().as_u32();
+                    if let Some(bid) = get_bundle_id(pid) {
+                        self.bundle_id = Some(bid);
+                        self.app_name = Some(proc.name().to_string());
+                        self.app_pid = Some(pid);
+                        break;
+                    }
+                }
             }
         }
     }
