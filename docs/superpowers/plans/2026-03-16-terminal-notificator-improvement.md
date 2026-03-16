@@ -22,7 +22,7 @@
 **Files:**
 - Modify: `src/context.rs`
 
-- [ ] **Step 1: 添加 get_terminal_from_env 函数**
+- [x] **Step 1: 添加 get_terminal_from_env 函数**
 
 在 `get_bundle_id` 函数之前添加：
 
@@ -62,7 +62,7 @@ fn find_terminal_pid(bundle_id: &str) -> Option<u32> {
 }
 ```
 
-- [ ] **Step 2: 在 resolve_app_info 中添加环境变量检测优先逻辑**
+- [x] **Step 2: 在 resolve_app_info 中添加环境变量检测优先逻辑**
 
 在 `resolve_app_info` 函数开头添加：
 
@@ -80,15 +80,15 @@ fn resolve_app_info(&mut self, sys: &System, ppid: Pid) {
 }
 ```
 
-- [ ] **Step 3: 编译测试**
+- [x] **Step 3: 编译测试**
 
 ```bash
 cargo build --release
 ```
 
-预期：编译成功
+预期：编译成功 ✅
 
-- [ ] **Step 4: 提交**
+- [x] **Step 4: 提交**
 
 ```bash
 git add src/context.rs
@@ -102,7 +102,7 @@ git commit -m "feat(context): 添加终端环境变量检测支持"
 **Files:**
 - Modify: `src/main.rs`
 
-- [ ] **Step 1: 在发送通知后添加超时线程**
+- [x] **Step 1: 在发送通知后添加超时线程**
 
 在 `src/main.rs` 的 `notifier.send_and_wait` 调用之后添加：
 
@@ -118,24 +118,24 @@ std::thread::spawn(move || {
 
 注意：这个超时应该在发送通知后立即启动，而不是等待用户交互后。
 
-- [ ] **Step 2: 编译测试**
+- [x] **Step 2: 编译测试**
 
 ```bash
 cargo build --release
 ```
 
-预期：编译成功
+预期：编译成功 ✅
 
-- [ ] **Step 3: 手动测试**
+- [x] **Step 3: 手动测试**
 
 ```bash
 # 运行程序，观察是否在 10 秒后自动退出
 /Users/user/projects/terminal-notificator/target/release/terminal-notificator -t "测试" -m "10秒后将自动退出"
 ```
 
-预期：10 秒后程序自动退出
+预期：10 秒后程序自动退出 ✅
 
-- [ ] **Step 4: 提交**
+- [x] **Step 4: 提交**
 
 ```bash
 git add src/main.rs
@@ -146,10 +146,10 @@ git commit -m "feat: 添加 10 秒超时自动退出功能"
 
 ## 验证清单
 
-- [ ] 在 Zed 中运行，检测到 `TERM_PROGRAM=zed`
-- [ ] 通知点击后正确激活 Zed
-- [ ] 10 秒无操作自动退出
-- [ ] 多个终端同时运行时也能正确识别
+- [x] 在 Zed 中运行，检测到 `TERM_PROGRAM=zed`
+- [x] 通知点击后正确激活 Zed
+- [x] 10 秒无操作自动退出
+- [x] 多个终端同时运行时也能正确识别
 
 ---
 

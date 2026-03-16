@@ -57,7 +57,14 @@ std::thread::spawn(move || {
 
 ## 测试场景
 
-1. 只运行 Zed 时，检测到 `TERM_PROGRAM=zed`
-2. 只运行 Ghostty 时，检测到 `TERM_PROGRAM=ghostty`
-3. 同时运行 Zed 和 Ghostty 时，准确识别当前终端
-4. 发送通知后 10 秒无操作，程序自动退出
+1. 只运行 Zed 时，检测到 `TERM_PROGRAM=zed` ✅
+2. 只运行 Ghostty 时，检测到 `TERM_PROGRAM=ghostty` ✅
+3. 同时运行 Zed 和 Ghostty 时，准确识别当前终端 ✅
+4. 发送通知后 10 秒无操作，程序自动退出 ✅
+
+## 实现状态
+
+| 功能 | 状态 | 提交 |
+|------|------|------|
+| 终端环境变量检测 | ✅ 已完成 | `aca7b01` |
+| 10 秒超时退出 | ✅ 已完成 | `e24d8d4` |
