@@ -27,6 +27,15 @@ fn main() {
 
     let notifier = Notifier::new();
     println!("Sending notification: {} - {}", args.title, args.message);
+
+    // 添加超时功能：10 秒后自动退出
+    let timeout_duration = std::time::Duration::from_secs(10);
+    std::thread::spawn(move || {
+        std::thread::sleep(timeout_duration);
+        println!("Timeout: exiting after 10 seconds");
+        std::process::exit(0);
+    });
+
     println!("Waiting for click or focus switch to activate parent application...");
 
     // Notification must be handled on the main thread for callbacks to work correctly on macOS.
