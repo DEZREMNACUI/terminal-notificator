@@ -1,6 +1,7 @@
 #!/bin/bash
 set -e
 
+# ./build.sh --app "NonExistentApp12345"
 # 解析参数
 APP_NAME=""
 while [[ $# -gt 0 ]]; do

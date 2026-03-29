@@ -24,7 +24,7 @@
 **Files:**
 - Create: `build.sh`
 
-- [ ] **Step 1: 创建 build.sh 脚本**
+- [x] **Step 1: 创建 build.sh 脚本**
 
 ```bash
 #!/bin/bash
@@ -77,12 +77,12 @@ echo "Usage:"
 echo "  $APP_DIR/Contents/MacOS/TerminalNotificator --title \"Test\" --message \"Hello\""
 ```
 
-- [ ] **Step 2: 设置脚本执行权限**
+- [x] **Step 2: 设置脚本执行权限**
 
 Run: `chmod +x build.sh`
 Expected: 无输出，脚本变为可执行
 
-- [ ] **Step 3: 运行构建脚本测试**
+- [x] **Step 3: 运行构建脚本测试**
 
 Run: `./build.sh`
 Expected:
@@ -99,7 +99,7 @@ Usage:
   .build/release/TerminalNotificator.app/Contents/MacOS/TerminalNotificator --title "Test" --message "Hello"
 ```
 
-- [ ] **Step 4: 验证 .app 结构**
+- [x] **Step 4: 验证 .app 结构**
 
 Run: `ls -la .build/release/TerminalNotificator.app/Contents/`
 Expected:
@@ -109,7 +109,7 @@ drwxr-xr-x  Resources
 -rw-r--r--   Info.plist
 ```
 
-- [ ] **Step 5: 验证 Info.plist 内容**
+- [x] **Step 5: 验证 Info.plist 内容**
 
 Run: `cat .build/release/TerminalNotificator.app/Contents/Info.plist`
 Expected:
@@ -132,12 +132,12 @@ Expected:
 </plist>
 ```
 
-- [ ] **Step 6: 验证二进制文件存在**
+- [x] **Step 6: 验证二进制文件存在**
 
 Run: `ls -la .build/release/TerminalNotificator.app/Contents/MacOS/TerminalNotificator`
 Expected: 显示可执行文件信息
 
-- [ ] **Step 7: 提交代码**
+- [x] **Step 7: 提交代码**
 
 ```bash
 git add build.sh
@@ -151,17 +151,17 @@ git commit -m "feat: 添加 .app 包装构建脚本"
 **Files:**
 - 无新增文件
 
-- [ ] **Step 1: 测试 .app 内的 CLI 基本功能**
+- [x] **Step 1: 测试 .app 内的 CLI 基本功能**
 
 Run: `.build/release/TerminalNotificator.app/Contents/MacOS/TerminalNotificator --help`
 Expected: 显示帮助信息
 
-- [ ] **Step 2: 测试 .app 内的 CLI 版本信息**
+- [x] **Step 2: 测试 .app 内的 CLI 版本信息**
 
 Run: `.build/release/TerminalNotificator.app/Contents/MacOS/TerminalNotificator --version`
 Expected: `2.0.0`
 
-- [ ] **Step 3: 测试通知发送（首次运行应弹出权限请求）**
+- [x] **Step 3: 测试通知发送（首次运行应弹出权限请求）**
 
 Run: `.build/release/TerminalNotificator.app/Contents/MacOS/TerminalNotificator --title "Test" --message "Hello from .app" --verbose`
 Expected:
@@ -169,7 +169,7 @@ Expected:
 - 授权后：通知正常发送，显示为终端应用图标
 - 输出包含 `[INFO]` 日志
 
-- [ ] **Step 4: 测试通知点击激活终端**
+- [x] **Step 4: 测试通知点击激活终端**
 
 Run: `.build/release/TerminalNotificator.app/Contents/MacOS/TerminalNotificator --title "Click Test" --message "Click me" --verbose`
 Expected:
@@ -183,11 +183,11 @@ Expected:
 **Files:**
 - Modify: `test.sh`
 
-- [ ] **Step 1: 读取现有 test.sh 内容**
+- [x] **Step 1: 读取现有 test.sh 内容**
 
 Run: `cat test.sh`
 
-- [ ] **Step 2: 更新 test.sh 使用 .app 内的二进制**
+- [x] **Step 2: 更新 test.sh 使用 .app 内的二进制**
 
 将测试脚本修改为使用 .app 包装后的二进制：
 
@@ -217,12 +217,12 @@ $APP_PATH --version
 echo "All tests passed!"
 ```
 
-- [ ] **Step 3: 运行更新后的测试脚本**
+- [x] **Step 3: 运行更新后的测试脚本**
 
 Run: `./test.sh`
 Expected: 所有测试通过
 
-- [ ] **Step 4: 提交代码**
+- [x] **Step 4: 提交代码**
 
 ```bash
 git add test.sh
