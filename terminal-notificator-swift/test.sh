@@ -10,6 +10,6 @@ sleep 2
 
 echo "🚀 发送通知！"
 # 执行通知程序，自动检测终端应用
-./terminal-notificator -t "任务完成" -m "你的长耗时脚本已经运行完毕，点击返回终端。" -v
+./terminal-notificator  -v
 
 echo "✨ 脚本结束。"

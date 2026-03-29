@@ -9,11 +9,11 @@ struct TerminalNotificatorCommand: ParsableCommand {
         version: "2.0.0"
     )
 
-    @Option(name: .shortAndLong, help: "Notification title.")
-    var title: String = "Terminal Notificator"
+    @Option(name: .shortAndLong, help: "Notification title. Default: terminal app name.")
+    var title: String?
 
-    @Option(name: .shortAndLong, help: "Notification message body.")
-    var message: String
+    @Option(name: .shortAndLong, help: "Notification message body. Default: current directory.")
+    var message: String?
 
     @Flag(name: .shortAndLong, help: "Enable verbose mode for debugging.")
     var verbose: Bool = false
@@ -23,9 +23,9 @@ struct TerminalNotificatorCommand: ParsableCommand {
 
     mutating func run() throws {
         let isVerbose = self.verbose
-        let notificationTitle = self.title
-        let notificationMessage = self.message
         let alwaysShow = self.alwaysShow
+        let titleArg = self.title
+        let messageArg = self.message
 
         Task { @MainActor in
             do {
@@ -35,6 +35,10 @@ struct TerminalNotificatorCommand: ParsableCommand {
 
                 let context = try await TerminalContext.detect()
                 let targetBundleId = context.bundleId
+
+                // 使用默认值：title = 应用名，message = 当前目录
+                let notificationTitle = titleArg ?? context.appName
+                let notificationMessage = messageArg ?? context.currentDirectory
 
                 if isVerbose {
                     print("[INFO] Identified Terminal:")
