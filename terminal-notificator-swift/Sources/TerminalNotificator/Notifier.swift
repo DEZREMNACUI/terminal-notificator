@@ -46,7 +46,7 @@ class BundleIdSpoofer {
 
 actor NotificationManager: NSObject, UNUserNotificationCenterDelegate {
     private var continuation: CheckedContinuation<Bool, Error>?
-    private var notificationCenter: AnyObject?
+    private var notificationCenter: UNUserNotificationCenter?
 
     nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter, didActivate response: UNNotificationResponse) {
         Task {
@@ -55,7 +55,7 @@ actor NotificationManager: NSObject, UNUserNotificationCenterDelegate {
     }
 
     nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification) async -> UNNotificationPresentationOptions {
-        return [.banner, .sound]
+        return [.banner, .sound, .list]
     }
 
     private func setIsClicked(_ value: Bool) {
@@ -64,41 +64,68 @@ actor NotificationManager: NSObject, UNUserNotificationCenterDelegate {
     }
 
     func send(title: String, message: String, bundleId: String) async throws -> Bool {
-        // 1. 伪造 Bundle ID 和 Bundle URL
-        BundleIdSpoofer.spoof(bundleId: bundleId)
+        // 1. 先用 .app 自己的 bundle ID 请求通知权限
+        let center = UNUserNotificationCenter.current()
+        self.notificationCenter = center
+        center.delegate = self
 
-        // 使用 NSUserNotificationCenter（已废弃但仍可用）
-        guard let notificationCenterClass = NSClassFromString("NSUserNotificationCenter") as? NSObjectProtocol,
-              let defaultCenter = notificationCenterClass.perform(NSSelectorFromString("defaultUserNotificationCenter"))?.takeUnretainedValue() else {
-            throw NotificationError.notificationCenterUnavailable
-        }
-
-        self.notificationCenter = defaultCenter
-
-        defaultCenter.perform(NSSelectorFromString("setDelegate:"), with: self)
-
-        // 创建 NSUserNotification
-        guard let notificationClass = NSClassFromString("NSUserNotification") as? NSObject.Type else {
-            throw NotificationError.failedToDeliverNotification
-        }
-
-        let notification = notificationClass.init()
-        notification.setValue(title, forKey: "title")
-        notification.setValue(message, forKey: "informativeText")
-        notification.setValue("NSUserNotificationDefaultSoundName", forKey: "soundName")
-
-        // 使用 withCheckedContinuation 等待用户响应
         return try await withCheckedThrowingContinuation { continuation in
             self.continuation = continuation
 
-            // 强制发送
-            defaultCenter.perform(NSSelectorFromString("deliverNotification:"), with: notification)
+            // 请求授权（使用 .app 自己的 bundle ID）
+            center.requestAuthorization(options: [.alert, .sound, .badge]) { granted, error in
+                if let error = error {
+                    Task {
+                        await self.resumeContinuation(with: .failure(error))
+                    }
+                    return
+                }
 
-            // 设置超时清理
-            Task {
-                try? await Task.sleep(nanoseconds: 10_000_000_000) // 10秒
-                await self.clearContinuationIfNeeded()
+                if !granted {
+                    Task {
+                        await self.resumeContinuation(with: .failure(NotificationError.permissionDenied))
+                    }
+                    return
+                }
+
+                // 2. 权限获得后，伪造 Bundle ID 以让通知显示为终端应用
+                BundleIdSpoofer.spoof(bundleId: bundleId)
+
+                // 3. 创建并发送通知
+                let content = UNMutableNotificationContent()
+                content.title = title
+                content.body = message
+                content.sound = .default
+
+                let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
+
+                center.add(request) { error in
+                    if let error = error {
+                        Task {
+                            await self.resumeContinuation(with: .failure(error))
+                        }
+                        return
+                    }
+
+                    // 通知已添加，设置超时
+                    Task {
+                        try? await Task.sleep(nanoseconds: 10_000_000_000) // 10秒
+                        await self.clearContinuationIfNeeded()
+                    }
+                }
             }
+        }
+    }
+
+    private func resumeContinuation(with result: Result<Bool, Error>) {
+        if let continuation = continuation {
+            switch result {
+            case .success(let value):
+                continuation.resume(returning: value)
+            case .failure(let error):
+                continuation.resume(throwing: error)
+            }
+            self.continuation = nil
         }
     }
 
@@ -107,31 +134,5 @@ actor NotificationManager: NSObject, UNUserNotificationCenterDelegate {
             continuation.resume(returning: false)
             self.continuation = nil
         }
-    }
-
-    // MARK: - NSUserNotificationCenterDelegate (动态实现)
-
-    override nonisolated func responds(to aSelector: Selector!) -> Bool {
-        let selName = NSStringFromSelector(aSelector)
-        if selName == "userNotificationCenter:didActivateNotification:" ||
-           selName == "userNotificationCenter:shouldPresentNotification:" {
-            return true
-        }
-        return super.responds(to: aSelector)
-    }
-
-    // didActivateNotification
-    @objc nonisolated func userNotificationCenter(_ center: Any, didActivateNotification notification: Any) {
-        Task {
-            if let notificationCenter = await self.notificationCenter {
-                notificationCenter.perform(NSSelectorFromString("removeDeliveredNotification:"), with: notification)
-            }
-            await setIsClicked(true)
-        }
-    }
-
-    // shouldPresentNotification
-    @objc nonisolated func userNotificationCenter(_ center: Any, shouldPresentNotification notification: Any) -> Bool {
-        return true
     }
 }
