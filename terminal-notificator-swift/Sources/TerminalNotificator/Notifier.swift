@@ -46,6 +46,7 @@ class BundleIdSpoofer {
 
 actor NotificationManager: NSObject, UNUserNotificationCenterDelegate {
     private var continuation: CheckedContinuation<Bool, Error>?
+    private var notificationCenter: AnyObject?
 
     nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter, didActivate response: UNNotificationResponse) {
         Task {
@@ -71,6 +72,8 @@ actor NotificationManager: NSObject, UNUserNotificationCenterDelegate {
               let defaultCenter = notificationCenterClass.perform(NSSelectorFromString("defaultUserNotificationCenter"))?.takeUnretainedValue() else {
             throw NotificationError.notificationCenterUnavailable
         }
+
+        self.notificationCenter = defaultCenter
 
         defaultCenter.perform(NSSelectorFromString("setDelegate:"), with: self)
 
@@ -120,6 +123,9 @@ actor NotificationManager: NSObject, UNUserNotificationCenterDelegate {
     // didActivateNotification
     @objc nonisolated func userNotificationCenter(_ center: Any, didActivateNotification notification: Any) {
         Task {
+            if let notificationCenter = await self.notificationCenter {
+                notificationCenter.perform(NSSelectorFromString("removeDeliveredNotification:"), with: notification)
+            }
             await setIsClicked(true)
         }
     }
