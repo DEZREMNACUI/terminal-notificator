@@ -4,7 +4,7 @@ import PackageDescription
 let package = Package(
     name: "TerminalNotificator",
     platforms: [
-        .macOS(.v11)
+        .macOS("15.0")
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-argument-parser", from: "1.3.0"),
