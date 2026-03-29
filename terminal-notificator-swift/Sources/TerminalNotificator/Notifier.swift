@@ -45,7 +45,7 @@ class BundleIdSpoofer {
 }
 
 actor NotificationManager: NSObject, UNUserNotificationCenterDelegate {
-    private var continuation: CheckedContinuation<Bool, Never>?
+    private var continuation: CheckedContinuation<Bool, Error>?
 
     nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter, didActivate response: UNNotificationResponse) {
         Task {
@@ -108,7 +108,7 @@ actor NotificationManager: NSObject, UNUserNotificationCenterDelegate {
 
     // MARK: - NSUserNotificationCenterDelegate (动态实现)
 
-    override func responds(to aSelector: Selector!) -> Bool {
+    override nonisolated func responds(to aSelector: Selector!) -> Bool {
         let selName = NSStringFromSelector(aSelector)
         if selName == "userNotificationCenter:didActivateNotification:" ||
            selName == "userNotificationCenter:shouldPresentNotification:" {
@@ -118,14 +118,14 @@ actor NotificationManager: NSObject, UNUserNotificationCenterDelegate {
     }
 
     // didActivateNotification
-    @objc func userNotificationCenter(_ center: Any, didActivateNotification notification: Any) {
+    @objc nonisolated func userNotificationCenter(_ center: Any, didActivateNotification notification: Any) {
         Task {
             await setIsClicked(true)
         }
     }
 
     // shouldPresentNotification
-    @objc func userNotificationCenter(_ center: Any, shouldPresentNotification notification: Any) -> Bool {
+    @objc nonisolated func userNotificationCenter(_ center: Any, shouldPresentNotification notification: Any) -> Bool {
         return true
     }
 }
