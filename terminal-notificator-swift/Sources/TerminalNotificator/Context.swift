@@ -39,6 +39,23 @@ struct TerminalContext {
     }
 }
 
+// MARK: - Focus Check
+
+extension TerminalContext {
+    @MainActor
+    func isFrontmostAndActive() async -> Bool {
+        // 1. 检查最前端应用是否匹配
+        guard let frontmostApp = NSWorkspace.shared.frontmostApplication,
+              frontmostApp.bundleIdentifier == bundleId,
+              frontmostApp.processIdentifier == appPid else {
+            return false
+        }
+        
+        // 2. 使用 AppleScript 检查最前端窗口是否匹配
+        return await checkFrontmostWindowMatches(currentDirectory: currentDirectory)
+    }
+}
+
 // MARK: - Helper Functions
 
 @MainActor
@@ -166,5 +183,54 @@ private func activateViaAppleScript(pid: pid_t, currentDirectory: String) async 
         print("Error running osascript: \(error)")
     }
 
+    return false
+}
+
+@MainActor
+private func checkFrontmostWindowMatches(currentDirectory: String) async -> Bool {
+    let dirName = (currentDirectory as NSString).lastPathComponent
+    
+    let script = """
+    tell application "System Events"
+        try
+            set frontApp to first application process whose frontmost is true
+            tell frontApp
+                try
+                    set frontWin to first window
+                    set winName to name of frontWin
+                    if winName contains "\(currentDirectory)" then
+                        return "true"
+                    else if winName contains "\(dirName)" then
+                        return "true"
+                    else
+                        return "false"
+                    end if
+                on error
+                    return "false"
+                end try
+            end tell
+        on error
+            return "false"
+        end try
+    end tell
+    """
+    
+    let task = Process()
+    task.launchPath = "/usr/bin/osascript"
+    task.arguments = ["-e", script]
+    
+    let pipe = Pipe()
+    task.standardOutput = pipe
+    
+    do {
+        try task.run()
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        if let output = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) {
+            return output == "true"
+        }
+    } catch {
+        print("Error checking frontmost window: \(error)")
+    }
+    
     return false
 }
