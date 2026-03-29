@@ -9,7 +9,7 @@ echo "📦 正在构建 .app 包..."
 ./build.sh
 
 # 获取 .app 内的二进制文件路径
-APP_PATH="./.build/release/TerminalNotificator.app/Contents/MacOS/TerminalNotificator"
+APP_PATH="./apps/default/TerminalNotificator.app/Contents/MacOS/TerminalNotificator"
 
 if [ ! -f "$APP_PATH" ]; then
     echo "❌ 构建失败，找不到可执行文件: $APP_PATH"
