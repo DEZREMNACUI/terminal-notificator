@@ -18,10 +18,14 @@ struct TerminalNotificatorCommand: ParsableCommand {
     @Flag(name: .shortAndLong, help: "Enable verbose mode for debugging.")
     var verbose: Bool = false
 
+    @Flag(name: .shortAndLong, help: "Always show notification even if terminal is focused.")
+    var alwaysShow: Bool = false
+
     mutating func run() throws {
         let isVerbose = self.verbose
         let notificationTitle = self.title
         let notificationMessage = self.message
+        let alwaysShow = self.alwaysShow
 
         Task { @MainActor in
             do {
@@ -37,6 +41,18 @@ struct TerminalNotificatorCommand: ParsableCommand {
                     print("       Name: \(context.appName)")
                     print("       Bundle ID: \(targetBundleId)")
                     print("       PID: \(context.appPid)")
+                    print("       Directory: \(context.currentDirectory)")
+                }
+
+                // 检查是否需要跳过
+                if !alwaysShow {
+                    let isFocused = await context.isFrontmostAndActive()
+                    if isFocused {
+                        if isVerbose {
+                            print("[INFO] Terminal window is currently focused, skipping notification.")
+                        }
+                        Darwin.exit(0)
+                    }
                 }
 
                 let service = NotificationService()
