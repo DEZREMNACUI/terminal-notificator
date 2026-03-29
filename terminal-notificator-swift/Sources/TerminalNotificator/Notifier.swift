@@ -48,10 +48,8 @@ actor NotificationManager: NSObject, UNUserNotificationCenterDelegate {
     private var continuation: CheckedContinuation<Bool, Error>?
     private var notificationCenter: UNUserNotificationCenter?
 
-    nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter, didActivate response: UNNotificationResponse) {
-        Task {
-            await setIsClicked(true)
-        }
+    nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse) async {
+        await setIsClicked(true)
     }
 
     nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification) async -> UNNotificationPresentationOptions {
