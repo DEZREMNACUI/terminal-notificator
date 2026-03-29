@@ -1,0 +1,70 @@
+#!/bin/bash
+set -e
+
+# 获取脚本所在目录
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd "$SCRIPT_DIR"
+
+# 检测当前终端应用
+detect_terminal_app() {
+    local term_program="${TERM_PROGRAM:-}"
+
+    case "$term_program" in
+        "zed")
+            echo "Zed"
+            ;;
+        "ghostty")
+            echo "Ghostty"
+            ;;
+        "Apple_Terminal")
+            echo "Terminal"
+            ;;
+        "iTerm.app")
+            echo "iTerm"
+            ;;
+        *)
+            # 尝试通过进程树检测
+            local ppid=$(ps -p $$ -o ppid= | tr -d ' ')
+            while [ "$ppid" -gt 1 ]; do
+                local proc_name=$(ps -p "$ppid" -o comm= | tr -d ' ')
+                case "$proc_name" in
+                    *zed*|*Zed*)
+                        echo "Zed"
+                        return
+                        ;;
+                    *ghostty*|*Ghostty*)
+                        echo "Ghostty"
+                        return
+                        ;;
+                    *Terminal*)
+                        echo "Terminal"
+                        return
+                        ;;
+                    *iTerm*)
+                        echo "iTerm"
+                        return
+                        ;;
+                esac
+                ppid=$(ps -p "$ppid" -o ppid= | tr -d ' ')
+            done
+            echo "default"
+            ;;
+    esac
+}
+
+# 检测终端应用
+APP_NAME=$(detect_terminal_app)
+APP_PATH="apps/$APP_NAME/TerminalNotificator.app/Contents/MacOS/TerminalNotificator"
+
+# 检查 .app 是否存在，不存在则构建
+if [ ! -f "$APP_PATH" ]; then
+    echo "Building .app bundle for $APP_NAME..."
+    if [ "$APP_NAME" = "default" ]; then
+        ./build.sh
+    else
+        ./build.sh --app "$APP_NAME"
+    fi
+fi
+
+# 调用对应的 .app 包，传递所有参数
+exec "$APP_PATH" "$@"
