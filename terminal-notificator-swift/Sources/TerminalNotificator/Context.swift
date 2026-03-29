@@ -5,6 +5,7 @@ struct TerminalContext {
     let bundleId: String
     let appName: String
     let appPid: pid_t
+    let currentDirectory: String
 
     @MainActor
     static func detect() async throws -> TerminalContext {
@@ -25,7 +26,7 @@ struct TerminalContext {
     @MainActor
     func activate() async -> Bool {
         // 先尝试用 AppleScript 激活特定窗口
-        if await activateViaAppleScript(pid: appPid) {
+        if await activateViaAppleScript(pid: appPid, currentDirectory: currentDirectory) {
             return true
         }
 
@@ -58,7 +59,8 @@ private func getTerminalFromEnv() async -> TerminalContext? {
     }
 
     if let pid = await findTerminalPid(bundleId: bundleId) {
-        return TerminalContext(bundleId: bundleId, appName: appName, appPid: pid)
+        let currentDir = FileManager.default.currentDirectoryPath
+        return TerminalContext(bundleId: bundleId, appName: appName, appPid: pid, currentDirectory: currentDir)
     }
 
     return nil
@@ -79,6 +81,7 @@ private func findTerminalPid(bundleId: String) async -> pid_t? {
 @MainActor
 private func resolveAppInfo(startingPid: pid_t) async throws -> TerminalContext? {
     var currentPid = startingPid
+    let currentDir = FileManager.default.currentDirectoryPath
 
     while currentPid > 1 {
         if let app = NSRunningApplication(processIdentifier: currentPid) {
@@ -90,7 +93,7 @@ private func resolveAppInfo(startingPid: pid_t) async throws -> TerminalContext?
                    !lowerName.contains("zsh") &&
                    !lowerName.contains("bash") &&
                    !lowerName.contains("login") {
-                    return TerminalContext(bundleId: bundleId, appName: procName, appPid: currentPid)
+                    return TerminalContext(bundleId: bundleId, appName: procName, appPid: currentPid, currentDirectory: currentDir)
                 }
             }
         }
@@ -111,21 +114,36 @@ private func resolveAppInfo(startingPid: pid_t) async throws -> TerminalContext?
     return nil
 }
 
-private func activateViaAppleScript(pid: pid_t) async -> Bool {
-    let currentDir = FileManager.default.currentDirectoryPath
-    let dirName = (currentDir as NSString).lastPathComponent
+private func activateViaAppleScript(pid: pid_t, currentDirectory: String) async -> Bool {
+    let dirName = (currentDirectory as NSString).lastPathComponent
 
     let script = """
     tell application "System Events"
         try
             set targetProc to first process whose unix id is \(pid)
             tell targetProc
-                set targetWin to (first window whose name contains "\(dirName)")
-                perform action "AXRaise" of targetWin
-                set frontmost to true
-                return "true"
+                -- 首先尝试匹配完整目录路径
+                set targetWin to missing value
+                try
+                    set targetWin to (first window whose name contains "\(currentDirectory)")
+                on error
+                    try
+                        -- 回退到只匹配目录名
+                        set targetWin to (first window whose name contains "\(dirName)")
+                    on error
+                        -- 如果都找不到，使用第一个窗口
+                        set targetWin to first window
+                    end try
+                end try
+                
+                if targetWin is not missing value then
+                    perform action "AXRaise" of targetWin
+                    set frontmost to true
+                    return "true"
+                end if
+                return "false"
             end tell
-        on error
+        on error errMsg
             return "false"
         end try
     end tell
