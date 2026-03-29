@@ -56,5 +56,38 @@ terminal-notificator -t "构建完成" -m "您的编译任务已顺利结束。"
 - **mac-notification-sys**: 基于原生 API 的通知发送。
 - **sysinfo & AppKit**: 进程探测与窗口激活。
 
+## 架构图
+```mermaid
+graph TD
+    User["User/Trae (Command Execution)"] -->|"Parse arguments (-t, -m)"| CLI["CLI Parser (clap)"]
+    CLI --> Main["Main Controller (src/main.rs)"]
+    
+    subgraph "Core Modules"
+        Main --> Context["ProcessContext (src/context.rs)"]
+        Main --> Notifier["Notifier (src/notifier.rs)"]
+        Main --> Timeout["Timeout Thread (10s limit)"]
+    end
+    
+    subgraph "Process Management"
+        Context --> SysInfo["Process Discovery (sysinfo)"]
+        Context --> Monitor["Focus Monitor (NSWorkspace)"]
+        Context --> Activator["App Activator (NSRunningApplication)"]
+    end
+    
+    subgraph "macOS System APIs"
+        Monitor --> |"Listen for Focus (NSWorkspaceDidActivateApplicationNotification)"| NSWorkspace["macOS NSWorkspace"]
+        Activator --> |"Activate App (activateWithOptions)"| NSRunningApp["macOS NSRunningApplication"]
+        Notifier --> |"Send Notification & Block (mac-notification-sys)"| MacNotify["macOS Notification Center"]
+    end
+    
+    %% Interactions & Exits
+    SysInfo -.->|"Identify Parent PID"| Context
+    Timeout -.->|"Kill process if idle"| Exit["Process Exit (std::process::exit)"]
+    Monitor -.->|"Auto-exit if target app focused manually"| Exit
+    
+    MacNotify -.->|"User clicks notification"| Notifier
+    Notifier -->|"Trigger activation"| Activator
+```
+
 ## 许可证
 MIT
