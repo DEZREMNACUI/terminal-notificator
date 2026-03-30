@@ -1,9 +1,11 @@
 #!/bin/bash
 set -e
 
-# 获取脚本所在目录
+# 获取脚本所在目录（不改变当前工作目录）
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-cd "$SCRIPT_DIR"
+
+# 保存原始工作目录
+ORIGINAL_PWD="$(pwd)"
 
 # 检测当前终端应用
 detect_terminal_app() {
@@ -54,16 +56,18 @@ detect_terminal_app() {
 
 # 检测终端应用
 APP_NAME=$(detect_terminal_app)
-APP_PATH="apps/$APP_NAME/TerminalNotificator.app/Contents/MacOS/TerminalNotificator"
+APP_PATH="$SCRIPT_DIR/apps/$APP_NAME/TerminalNotificator.app/Contents/MacOS/TerminalNotificator"
 
 # 检查 .app 是否存在，不存在则构建
 if [ ! -f "$APP_PATH" ]; then
     echo "Building .app bundle for $APP_NAME..."
+    cd "$SCRIPT_DIR"
     if [ "$APP_NAME" = "default" ]; then
         ./build.sh
     else
         ./build.sh --app "$APP_NAME"
     fi
+    cd "$ORIGINAL_PWD"
 fi
 
 # 调用对应的 .app 包，传递所有参数
