@@ -54,11 +54,43 @@ detect_terminal_app() {
     esac
 }
 
-# 检测终端应用
-APP_NAME=$(detect_terminal_app)
+# 参数解析：提取 --build-app 参数，其余参数透传
+BUILD_APP=""
+REMAINING_ARGS=()
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --build-app)
+            if [ -n "$2" ] && [[ ! "$2" =~ ^- ]]; then
+                BUILD_APP="$2"
+                shift 2
+            else
+                echo "Error: --build-app requires an argument" >&2
+                exit 1
+            fi
+            ;;
+        *)
+            REMAINING_ARGS+=("$1")
+            shift
+            ;;
+    esac
+done
+
+# 确定目标 app
+if [ -z "$BUILD_APP" ]; then
+    # 无参数：默认使用 default
+    APP_NAME="default"
+elif [ "$BUILD_APP" = "auto" ]; then
+    # auto：自动检测终端
+    APP_NAME=$(detect_terminal_app)
+else
+    # 指定名称：使用指定值
+    APP_NAME="$BUILD_APP"
+fi
+
+# 检查 .app 是否存在
 APP_PATH="$SCRIPT_DIR/apps/$APP_NAME/TerminalNotificator.app/Contents/MacOS/TerminalNotificator"
 
-# 检查 .app 是否存在，不存在则构建
 if [ ! -f "$APP_PATH" ]; then
     echo "Building .app bundle for $APP_NAME..."
     cd "$SCRIPT_DIR"
@@ -70,5 +102,5 @@ if [ ! -f "$APP_PATH" ]; then
     cd "$ORIGINAL_PWD"
 fi
 
-# 调用对应的 .app 包，传递所有参数
-exec "$APP_PATH" "$@"
+# 调用对应的 .app 包，传递剩余参数
+exec "$APP_PATH" "${REMAINING_ARGS[@]}"
