@@ -6,13 +6,13 @@ struct NotificationService {
     func sendNotification(
         title: String,
         message: String,
-        bundleId: String,
+        context: TerminalContext,
         timeout: Duration = .seconds(10)
     ) async throws -> NotificationResponse {
         let wasClicked = try await withThrowingTaskGroup(of: Bool.self) { group in
             // 主任务：发送通知
             group.addTask {
-                try await notificationManager.send(title: title, message: message, bundleId: bundleId)
+                try await notificationManager.send(title: title, message: message, bundleId: context.bundleId)
             }
 
             // 超时任务
@@ -34,7 +34,6 @@ struct NotificationService {
 
         var activationSuccess: Bool?
         if wasClicked {
-            let context = try await TerminalContext.detect()
             activationSuccess = await context.activate()
         }
 

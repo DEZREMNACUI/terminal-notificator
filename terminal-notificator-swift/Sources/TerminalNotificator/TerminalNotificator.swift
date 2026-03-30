@@ -67,7 +67,7 @@ struct TerminalNotificatorCommand: ParsableCommand {
                 let response = try await service.sendNotification(
                     title: notificationTitle,
                     message: notificationMessage,
-                    bundleId: targetBundleId,
+                    context: context,
                     timeout: .seconds(10)
                 )
 

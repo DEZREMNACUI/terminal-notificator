@@ -10,7 +10,7 @@ struct TerminalContext {
     @MainActor
     static func detect() async throws -> TerminalContext {
         // 1. 尝试从环境变量获取
-        if let context = try await getTerminalFromEnv() {
+        if let context = await getTerminalFromEnv() {
             return context
         }
 
