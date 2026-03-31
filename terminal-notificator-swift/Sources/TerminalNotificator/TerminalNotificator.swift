@@ -20,15 +20,11 @@ struct TerminalNotificatorCommand: ParsableCommand {
     @Flag(name: .shortAndLong, help: "Enable verbose mode for debugging.")
     var verbose: Bool = false
 
-    @Flag(name: .shortAndLong, help: "Always show notification even if terminal is focused.")
-    var alwaysShow: Bool = false
-
     @Option(name: .long, help: "Timeout in seconds to wait for notification click or window focus. Default: 3600 seconds (1 hour).")
     var timeout: Int?
 
     mutating func run() throws {
         let isVerbose = self.verbose
-        let alwaysShow = self.alwaysShow
         let titleArg = self.title
         let messageArg = self.message
         let timeoutSeconds = self.timeout ?? 3600  // 默认 1 小时
@@ -53,17 +49,6 @@ struct TerminalNotificatorCommand: ParsableCommand {
                     print("       PID: \(context.appPid)")
                     print("       Directory: \(context.currentDirectory)")
                     print("       Timeout: \(timeoutSeconds) seconds")
-                }
-
-                // 检查是否需要跳过
-                if !alwaysShow {
-                    let isFocused = await context.isFrontmostAndActive()
-                    if isFocused {
-                        if isVerbose {
-                            print("[INFO] Terminal window is currently focused, skipping notification.")
-                        }
-                        Darwin.exit(0)
-                    }
                 }
 
                 let service = NotificationService()
@@ -103,7 +88,7 @@ struct TerminalNotificatorCommand: ParsableCommand {
                                 var didResume = false
                             }
                             let state = State()
-                            let _ = NotificationCenter.default.addObserver(
+                            let _ = NSWorkspace.shared.notificationCenter.addObserver(
                                 forName: NSWorkspace.didActivateApplicationNotification,
                                 object: nil,
                                 queue: .main
