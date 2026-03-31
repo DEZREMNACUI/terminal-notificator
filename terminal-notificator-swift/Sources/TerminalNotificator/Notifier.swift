@@ -1,5 +1,5 @@
 import Foundation
-import UserNotifications
+@preconcurrency import UserNotifications
 import AppKit
 
 /// 这是一个黑魔法类，用于拦截 Bundle 的 bundleIdentifier 属性，
@@ -47,6 +47,7 @@ class BundleIdSpoofer {
 actor NotificationManager: NSObject, UNUserNotificationCenterDelegate {
     private var continuation: CheckedContinuation<Bool, Error>?
     private var notificationCenter: UNUserNotificationCenter?
+    private var currentNotificationId: String?
 
     nonisolated func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse) async {
         await setIsClicked(true)
@@ -66,6 +67,10 @@ actor NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         let center = UNUserNotificationCenter.current()
         self.notificationCenter = center
         center.delegate = self
+
+        // 生成 notificationId 并存储在 actor 中
+        let notificationId = UUID().uuidString
+        self.currentNotificationId = notificationId
 
         return try await withCheckedThrowingContinuation { continuation in
             self.continuation = continuation
@@ -95,7 +100,7 @@ actor NotificationManager: NSObject, UNUserNotificationCenterDelegate {
                 content.body = message
                 content.sound = .default
 
-                let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
+                let request = UNNotificationRequest(identifier: notificationId, content: content, trigger: nil)
 
                 center.add(request) { error in
                     if let error = error {
@@ -132,5 +137,14 @@ actor NotificationManager: NSObject, UNUserNotificationCenterDelegate {
             continuation.resume(returning: false)
             self.continuation = nil
         }
+    }
+
+    func removeNotification() {
+        guard let notificationId = currentNotificationId,
+              let center = notificationCenter else {
+            return
+        }
+        center.removeDeliveredNotifications(withIdentifiers: [notificationId])
+        self.currentNotificationId = nil
     }
 }
