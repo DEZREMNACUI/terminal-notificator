@@ -20,10 +20,19 @@ actor NotificationManager: NSObject, UNUserNotificationCenterDelegate {
     // MARK: - Public API
 
     /// 发送 OSC 9 通知（适用于 Ghostty 等终端）
+    /// 直接输出到 /dev/tty 以绕过 stdout 重定向
     func sendOSC9(title: String) {
         let osc9 = "\u{1B}]9;\(title)\u{1B}\\"
-        print(osc9, terminator: "")
-        fflush(stdout)
+
+        // 优先写入 /dev/tty，确保即使 stdout 被重定向也能生效
+        if let tty = FileHandle(forWritingAtPath: "/dev/tty") {
+            tty.write(Data(osc9.utf8))
+            try? tty.close()
+        } else {
+            // 回退到 stdout
+            print(osc9, terminator: "")
+            fflush(stdout)
+        }
     }
 
     /// 发送系统通知，返回是否被点击
