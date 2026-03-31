@@ -49,32 +49,23 @@ struct TerminalContext {
 extension TerminalContext {
     @MainActor
     func isFrontmostAndActive() async -> Bool {
-        // 1. 检查最前端应用是否匹配
         guard let frontmostApp = NSWorkspace.shared.frontmostApplication else {
             return false
         }
-        
-        let frontmostBundleId = frontmostApp.bundleIdentifier
-        let frontmostPid = frontmostApp.processIdentifier
-        
-        // 调试：检查 frontmost 应用信息
-        print("[DEBUG] Frontmost app: \(frontmostApp.localizedName ?? "nil"), bundleId: \(frontmostBundleId ?? "nil"), pid: \(frontmostPid)")
-        print("[DEBUG] Expected: bundleId: \(bundleId), pid: \(appPid)")
-        
-        guard frontmostBundleId == bundleId,
-              frontmostPid == appPid else {
+
+        guard frontmostApp.bundleIdentifier == bundleId,
+              frontmostApp.processIdentifier == appPid else {
             return false
         }
-        
-        // 2. 对于某些终端（如 Ghostty），窗口标题是命令而非目录
+
+        // 对于某些终端（如 Ghostty），窗口标题是命令而非目录
         // 如果应用本身在焦点，就认为终端在焦点
-        // 注意：Ghostty 的窗口标题是当前运行的命令，无法通过目录匹配
         let terminalsToSkipWindowCheck = ["com.mitchellh.ghostty"]
         if terminalsToSkipWindowCheck.contains(bundleId) {
             return true
         }
-        
-        // 3. 对于其他终端，检查窗口是否匹配目录
+
+        // 对于其他终端，检查窗口是否匹配目录
         return await checkFrontmostWindowMatches(currentDirectory: currentDirectory)
     }
 }
@@ -138,7 +129,6 @@ private func resolveAppInfo(startingPid: pid_t) async throws -> TerminalContext?
             }
         }
 
-        // 获取父进程 PID
         var mib = [CTL_KERN, KERN_PROC, KERN_PROC_PID, currentPid]
         var info = kinfo_proc()
         var size = MemoryLayout<kinfo_proc>.stride
@@ -152,6 +142,26 @@ private func resolveAppInfo(startingPid: pid_t) async throws -> TerminalContext?
     }
 
     return nil
+}
+
+// MARK: - AppleScript Helper
+
+/// 执行 AppleScript 并返回输出结果
+private func runAppleScript(_ script: String) -> String? {
+    let task = Process()
+    task.launchPath = "/usr/bin/osascript"
+    task.arguments = ["-e", script]
+
+    let pipe = Pipe()
+    task.standardOutput = pipe
+
+    do {
+        try task.run()
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        return String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
+    } catch {
+        return nil
+    }
 }
 
 private func activateViaAppleScript(pid: pid_t, currentDirectory: String) async -> Bool {
@@ -175,7 +185,7 @@ private func activateViaAppleScript(pid: pid_t, currentDirectory: String) async 
                         set targetWin to first window
                     end try
                 end try
-                
+
                 if targetWin is not missing value then
                     perform action "AXRaise" of targetWin
                     set frontmost to true
@@ -183,36 +193,19 @@ private func activateViaAppleScript(pid: pid_t, currentDirectory: String) async 
                 end if
                 return "false"
             end tell
-        on error errMsg
+        on error
             return "false"
         end try
     end tell
     """
 
-    let task = Process()
-    task.launchPath = "/usr/bin/osascript"
-    task.arguments = ["-e", script]
-
-    let pipe = Pipe()
-    task.standardOutput = pipe
-
-    do {
-        try task.run()
-        let data = pipe.fileHandleForReading.readDataToEndOfFile()
-        if let output = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) {
-            return output == "true"
-        }
-    } catch {
-        print("Error running osascript: \(error)")
-    }
-
-    return false
+    return runAppleScript(script) == "true"
 }
 
 @MainActor
 private func checkFrontmostWindowMatches(currentDirectory: String) async -> Bool {
     let dirName = (currentDirectory as NSString).lastPathComponent
-    
+
     let script = """
     tell application "System Events"
         try
@@ -220,40 +213,20 @@ private func checkFrontmostWindowMatches(currentDirectory: String) async -> Bool
             tell frontApp
                 try
                     set frontWin to first window
-                    set winName to name of frontWin
-                    return winName
+                    return name of frontWin
                 on error
-                    return "ERROR: no window"
+                    return ""
                 end try
             end tell
         on error
-            return "ERROR: no frontmost app"
+            return ""
         end try
     end tell
     """
-    
-    let task = Process()
-    task.launchPath = "/usr/bin/osascript"
-    task.arguments = ["-e", script]
-    
-    let pipe = Pipe()
-    task.standardOutput = pipe
-    
-    do {
-        try task.run()
-        let data = pipe.fileHandleForReading.readDataToEndOfFile()
-        if let winName = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) {
-            print("[DEBUG] Window name: '\(winName)'")
-            print("[DEBUG] Checking against: '\(currentDirectory)' or '\(dirName)'")
-            
-            if winName.contains(currentDirectory) || winName.contains(dirName) {
-                return true
-            }
-            return false
-        }
-    } catch {
-        print("Error checking frontmost window: \(error)")
+
+    guard let winName = runAppleScript(script), !winName.isEmpty else {
+        return false
     }
-    
-    return false
+
+    return winName.contains(currentDirectory) || winName.contains(dirName)
 }

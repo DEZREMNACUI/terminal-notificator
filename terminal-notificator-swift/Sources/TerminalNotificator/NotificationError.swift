@@ -5,7 +5,6 @@ enum NotificationError: Error {
     case failedToDeliverNotification
     case timeout
     case activationFailed
-    case bundleSpoofingFailed
     case terminalContextNotFound
     case permissionDenied
 }
@@ -21,8 +20,6 @@ extension NotificationError: LocalizedError {
             return "操作超时"
         case .activationFailed:
             return "激活终端失败"
-        case .bundleSpoofingFailed:
-            return "Bundle ID 伪造失败"
         case .terminalContextNotFound:
             return "无法检测终端上下文"
         case .permissionDenied:
