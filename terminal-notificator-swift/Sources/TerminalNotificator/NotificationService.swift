@@ -3,6 +3,14 @@ import Foundation
 struct NotificationService {
     private let notificationManager = NotificationManager()
 
+    /// 发送 OSC 9 通知（适用于 Ghostty 等终端）
+    func sendOSC9Notification(title: String) {
+        // OSC 9 格式: ESC ] 9 ; title ESC \
+        let osc9 = "\u{1B}]9;\(title)\u{1B}\\"
+        print(osc9, terminator: "")
+        fflush(stdout)
+    }
+
     func sendNotification(
         title: String,
         message: String,

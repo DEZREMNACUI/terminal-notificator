@@ -7,6 +7,11 @@ struct TerminalContext {
     let appPid: pid_t
     let currentDirectory: String
 
+    /// 是否支持 OSC 9 通知（如 Ghostty）
+    var supportsOSC9: Bool {
+        return bundleId == "com.mitchellh.ghostty"
+    }
+
     @MainActor
     static func detect() async throws -> TerminalContext {
         // 1. 尝试从环境变量获取

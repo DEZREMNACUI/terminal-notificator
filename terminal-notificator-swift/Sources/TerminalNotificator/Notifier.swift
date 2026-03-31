@@ -112,7 +112,7 @@ actor NotificationManager: NSObject, UNUserNotificationCenterDelegate {
 
                     // 通知已添加，设置超时
                     Task {
-                        try? await Task.sleep(nanoseconds: 10_000_000_000) // 10秒
+                        try? await Task.sleep(nanoseconds: 10_000_000_000 * 6) // 10秒
                         await self.clearContinuationIfNeeded()
                     }
                 }

@@ -52,6 +52,18 @@ struct TerminalNotificatorCommand: ParsableCommand {
                 }
 
                 let service = NotificationService()
+
+                // Ghostty 支持 OSC 9，直接发送通知后退出
+                if context.supportsOSC9 {
+                    if isVerbose {
+                        print("[INFO] Using OSC 9 for Ghostty notification...")
+                    }
+                    // OSC 9 只支持标题，将标题和消息合并
+                    let fullTitle = messageArg != nil ? "\(notificationTitle): \(notificationMessage)" : notificationTitle
+                    service.sendOSC9Notification(title: fullTitle)
+                    Darwin.exit(0)
+                }
+
                 if isVerbose {
                     print("[INFO] Sending notification as \(targetBundleId)...")
                 }
